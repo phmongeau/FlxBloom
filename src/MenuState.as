@@ -6,11 +6,13 @@ package
 	{
 		private const _bloom:uint = 8;	//How much light bloom to have - larger numbers = more
 		private var _fx:FlxSprite;		//Our helper sprite - basically a mini screen buffer (see below)
+        private var _smallBuffer:FlxSprite;
+        private var t:FlxText;
 		
 		override public function create():void
 		{
 			//Title text, nothing crazy here!
-			var t:FlxText = new FlxText(0,FlxG.height/2-20,FlxG.width,"FlxBloom");
+			t = new FlxText(0,FlxG.height/2-20,FlxG.width,"FlxBloom");
 			t.size = 32;
 			t.alignment = "center";
 			add(t);
@@ -25,11 +27,21 @@ package
 			_fx.color = 0xafffff;				//Tint it a little, cuz that looks cool
 			_fx.blend = "screen";				//Finally, set blend mode to "screen" (important!)
 			//Note that we do not add it to the game state!  It's just a helper, not a real sprite.
+
+            //create a scalled buffer
+            //this replaces the scalling of the screen buffer
+            _smallBuffer = new FlxSprite();
+            _smallBuffer.createGraphic(FlxG.width, FlxG.height, 0, true);
+            _smallBuffer.origin = new FlxPoint(0,0);
+            _smallBuffer.scale = new FlxPoint(1/_bloom, 1/_bloom);
+
+            //FlxG.showBounds = true;
+
 			
 			//Then we scale the screen buffer down, so it draws a smaller version of itself
 			// into our tiny FX buffer, which is then scaled up.  The net result of this operation
 			// is a blurry image that we can render back over the screen buffer to create the bloom.
-			screen.scale.x = screen.scale.y = 1/_bloom;
+			//screen.scale.x = screen.scale.y = 1/_bloom;
 			
 			//This is the particle emitter that spews things off the bottom of the screen.
 			//I'm not going to go over it in too much detail here, but basically we
@@ -60,8 +72,10 @@ package
 		override public function postProcess():void
 		{
 			//The actual blur process is quite simple now.
-			//First we draw the contents of the screen onto the tiny FX buffer:
-			_fx.draw(screen);
+            //draw the sprites you want to blur on the buffer
+            _smallBuffer.draw(t, t.x, t.y);
+            //draw the buffer on fx
+			_fx.draw(_smallBuffer);
 			//Then we draw the scaled-up contents of the FX buffer back onto the screen:
 			screen.draw(_fx);
 		}
