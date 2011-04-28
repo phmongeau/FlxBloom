@@ -9,10 +9,10 @@ package
 	{
 		public var toggle:Boolean;
 		
-		protected const _bloom:uint = 6;	//How much light bloom to have - larger numbers = more
-		protected var _fx:FlxSprite;		//Our helper sprite - basically a mini screen buffer (see below)
-		protected var _emitter:FlxEmitter;	//The _emitter that spews things off the bottom of the screen. (see below)
-		protected var _smallBuffer:FlxSprite;
+		protected const _bloom:uint = 6;      // How much light bloom to have - larger numbers = more
+		protected var _fx:FlxSprite;          // Our helper sprite - basically a mini screen buffer (see below)
+		protected var _emitter:FlxEmitter;    // The _emitter that spews things off the bottom of the screen.
+		protected var _smallBuffer:FlxSprite; // A small sprite used as a tiny buffer to create the bloom effect.
 	
 		//This is where everything gets set up for the game state
 		override public function create():void
@@ -36,23 +36,20 @@ package
 			_fx.antialiasing = true;	//Set AA to true for maximum blurry
 			_fx.blend = "screen";		//Set blend mode to "screen" to make the blurred copy transparent and brightening
 			//Note that we do not add it to the game state!  It's just a helper, not a "real" sprite.
-			
-			//Then we scale the screen buffer down, so it draws a smaller version of itself
-			// into our tiny FX buffer, which is already scaled up.  The net result of this operation
-			// is a blurry image that we can render back over the screen buffer to create the bloom.
-			//FlxG.camera.screen.scale.x = 1/_bloom;
-			//FlxG.camera.screen.scale.y = 1/_bloom;
 
-            //create a scalled buffer
+            //create a scalled buffer to which we will draw the sprites we want to bloom
+			//The net result of this operation is a blurry image that we can render back over the screen
+			//buffer to create the bloom
             //this replaces the scalling of the screen buffer
             _smallBuffer = new FlxSprite();
             _smallBuffer.makeGraphic(FlxG.width, FlxG.height, 0, true);
             _smallBuffer.origin = new FlxPoint(0,0);
             _smallBuffer.scale = new FlxPoint(1/_bloom, 1/_bloom);
+			//This is also a helper, so it is not added to the state
 
 			//This is the particle _emitter that spews things off the bottom of the screen.
 			//I'm not going to go over it in too much detail here, but basically we
-			// create the _emitter, then we create 50 16x16 sprites and add them to it.
+			//create the _emitter, then we create 50 16x16 sprites and add them to it.
 			var particles:uint = 50;
 			//var _emitter:Flx_emitter = new Flx_emitter(0,FlxG.height+8,particles);
 			_emitter = new FlxEmitter(0, FlxG.height+8, particles);
@@ -94,7 +91,7 @@ package
 			if(toggle)
 			{
 				//The actual blur process is quite simple now.
-				//First, we stamp the sprites we want to bloom on the buffer
+				//First, we stamp the sprites we want to bloom on the small buffer
 				for each(var s:FlxSprite in _emitter.members)
 				{
 					if(s.exists)
@@ -104,6 +101,7 @@ package
 				_fx.stamp(_smallBuffer);
 				//Then we draw the scaled-up contents of the FX buffer back onto the screen:
 				_fx.draw();
+				//Finaly we clear the small buffer to make it ready for the next frame
 				_smallBuffer.fill(0xFF000000);
 			}
 		}
